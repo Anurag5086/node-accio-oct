@@ -1,0 +1,10 @@
+{
+  "todos": [
+    {
+      "id": 3,
+      "title": "Complete TODO API",
+      "date": "2023-10-15T16:18:36.809Z",
+      "isCompleted": true
+    }
+  ]
+}
