@@ -1,11 +1,86 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const Todo = require("./models/TodoSchema");
+const { LoggerMiddleware } = require("./middlewares/LoggerMiddleware");
+const User = require("./models/UserSchema");
 require("dotenv").config();
 const app = express();
 
+app.use(LoggerMiddleware);
 app.use(express.json());
+
 const PORT = process.env.PORT;
+const SALT_ROUNDS = 12;
+
+// POST - Register User
+app.post("/register", async (req, res) => {
+  const userBody = req.body;
+
+  const hashedPassword = await bcrypt.hash(userBody.password, SALT_ROUNDS);
+
+  const userObj = new User({
+    name: userBody.name,
+    username: userBody.username,
+    password: hashedPassword,
+    email: userBody.email,
+  });
+
+  try {
+    await userObj.save();
+
+    res.status(201).send({
+      status: 201,
+      message: "User registered successfully!",
+    });
+  } catch (err) {
+    res.status(400).send({
+      status: 400,
+      message: "Failed to register user!",
+      data: err,
+    });
+  }
+});
+
+// POST - Login User
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  let userData;
+
+  try {
+    userData = await User.findOne({ username });
+  } catch (err) {
+    res.status(400).send({
+      status: 400,
+      message: "User fetching failed!",
+      data: err,
+    });
+  }
+
+  let isPasswordSame = await bcrypt.compare(password, userData.password);
+
+  if (!isPasswordSame) {
+    return res.status(400).send({
+      status: 400,
+      message: "Password is incorrect!",
+    });
+  } else {
+    let payload = {
+      name: userData.name,
+      username: userData.username,
+      email: userData.email,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET_KEY);
+
+    res.status(200).send({
+      status: 200,
+      message: "Successfully logged in!",
+      data: token,
+    });
+  }
+});
 
 // POST - Create a Todo
 app.post("/todo", async (req, res) => {
