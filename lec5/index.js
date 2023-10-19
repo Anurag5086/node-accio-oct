@@ -5,11 +5,12 @@ const jwt = require("jsonwebtoken");
 const Todo = require("./models/TodoSchema");
 const { LoggerMiddleware } = require("./middlewares/LoggerMiddleware");
 const User = require("./models/UserSchema");
+const { isAuth } = require("./middlewares/AuthMiddleware");
 require("dotenv").config();
 const app = express();
 
-app.use(LoggerMiddleware);
 app.use(express.json());
+app.use(LoggerMiddleware);
 
 const PORT = process.env.PORT;
 const SALT_ROUNDS = 12;
@@ -83,7 +84,7 @@ app.post("/login", async (req, res) => {
 });
 
 // POST - Create a Todo
-app.post("/todo", async (req, res) => {
+app.post("/todo", isAuth, async (req, res) => {
   const { title, isCompleted, username } = req.body;
 
   if (title.length == 0 || isCompleted == null || username.length == 0) {
@@ -117,11 +118,17 @@ app.post("/todo", async (req, res) => {
 });
 
 // GET - Get all todos for a username
-app.get("/todos/:username", async (req, res) => {
+// /todos/anurag23
+app.get("/todos/:username", isAuth, async (req, res) => {
   const username = req.params.username;
+  const page = Number(req.query.page) || 1;
+  const LIMIT = 5;
 
   try {
-    const todoList = await Todo.find({ username }).sort({ dateTime: 1 });
+    const todoList = await Todo.find({ username })
+      .sort({ dateTime: 1 })
+      .skip((page - 1) * LIMIT)
+      .limit(LIMIT);
 
     res.status(200).send({
       status: 200,
@@ -138,7 +145,7 @@ app.get("/todos/:username", async (req, res) => {
 });
 
 // GET - Get a single Todo
-app.get("/todo/:id", (req, res) => {
+app.get("/todo/:id", isAuth, (req, res) => {
   const todoId = req.params.id;
 
   Todo.findById(todoId)
@@ -159,7 +166,7 @@ app.get("/todo/:id", (req, res) => {
 });
 
 // DELETE - Delete a todo based on id
-app.delete("/todo/:id", async (req, res) => {
+app.delete("/todo/:id", isAuth, async (req, res) => {
   const todoId = req.params.id;
 
   try {
@@ -179,7 +186,7 @@ app.delete("/todo/:id", async (req, res) => {
 });
 
 // PATCH - Update a todo
-app.patch("/todo", async (req, res) => {
+app.patch("/todo", isAuth, async (req, res) => {
   const { id, title, isCompleted } = req.body;
 
   try {
