@@ -128,4 +128,46 @@ const loginUser = async (req, res) => {
   });
 };
 
-module.exports = { registerUser, loginUser };
+const getAllUsers = async (req, res) => {
+  const userId = req.locals.userId;
+
+  let usersData;
+
+  try {
+    usersData = await User.find({ _id: { $ne: userId } });
+
+    if (!usersData) {
+      return res.status(400).send({
+        status: 400,
+        message: "Failed to fetch all users",
+      });
+    }
+  } catch (err) {
+    return res.status(400).send({
+      status: 400,
+      message: "Failed to fetch all users",
+      data: err,
+    });
+  }
+
+  let usersList = [];
+
+  usersData.map((user) => {
+    let userObj = {
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      _id: user._id,
+    };
+
+    usersList.push(userObj);
+  });
+
+  return res.status(200).send({
+    status: 200,
+    message: "All users fetched succesfully",
+    data: usersList,
+  });
+};
+
+module.exports = { registerUser, loginUser, getAllUsers };
