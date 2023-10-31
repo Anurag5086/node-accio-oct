@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import axios from "axios";
 
@@ -7,6 +7,12 @@ function CreateBlog() {
   const [textBody, setTextBody] = useState();
 
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!token) {
+      window.location.href = "/login";
+    }
+  }, [token]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

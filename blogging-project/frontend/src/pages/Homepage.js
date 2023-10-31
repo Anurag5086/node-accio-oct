@@ -7,22 +7,26 @@ function Homepage() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    axios
-      .get(`${process.env.REACT_APP_BACKEND_URL}/blog/homepage-blogs`, {
-        headers: {
-          "X-Acciojob": token,
-        },
-      })
-      .then((res) => {
-        if (res.status === 200) {
-          setHomepageBlogs(res.data.data);
-        } else {
-          alert(res.data.message);
-        }
-      })
-      .catch((err) => {
-        alert(err);
-      });
+    if (!token) {
+      window.location.href = "/login";
+    } else {
+      axios
+        .get(`${process.env.REACT_APP_BACKEND_URL}/blog/homepage-blogs`, {
+          headers: {
+            "X-Acciojob": token,
+          },
+        })
+        .then((res) => {
+          if (res.status === 200) {
+            setHomepageBlogs(res.data.data);
+          } else {
+            alert(res.data.message);
+          }
+        })
+        .catch((err) => {
+          alert(err);
+        });
+    }
   }, [token]);
 
   return (
